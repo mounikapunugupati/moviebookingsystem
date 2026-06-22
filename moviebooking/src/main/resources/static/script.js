@@ -552,7 +552,7 @@ function renderBookings() {
             '<p style="color:#64748b; padding:2rem;">No bookings yet.</p>';
         return;
     }
-
+    
     container.innerHTML = bookings.map(b => `
 
         <div class="booking-card">
@@ -582,6 +582,10 @@ function renderBookings() {
                 <span class="badge paid">
                     ${b.payment?.paymentStatus || 'SUCCESS'}
                 </span>
+                <button onclick="cancelBooking(${b.id})"
+        class="btn btn-danger">
+    Cancel Ticket
+</button>
 
             </div>
 
@@ -589,11 +593,32 @@ function renderBookings() {
 
     `).join('');
 }
-function cancelBooking(id) {
-    bookings = bookings.filter(b => b.id !== id);
-    renderBookings();
-    showToast('Booking cancelled');
-    if (currentUser) renderProfile();
+async function cancelBooking(id) {
+    try {
+
+        const response = await fetch(
+            `http://localhost:8080/bookings/${id}`,
+            {
+                method: "DELETE",
+                headers: {
+                    "Authorization":
+                        "Bearer " + localStorage.getItem("token")
+                }
+            }
+        );
+
+        if (!response.ok) {
+            throw new Error("Cancel failed");
+        }
+
+        showToast("Ticket cancelled");
+
+        await loadUserBookings();
+
+    } catch (error) {
+        console.error(error);
+        showToast("Unable to cancel ticket");
+    }
 }
 
 // ---------- PROFILE ----------
